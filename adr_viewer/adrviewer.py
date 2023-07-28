@@ -146,8 +146,7 @@ def get_adr_files(path):
 
 def exclude_adr_files(files, exclusions):
     for exclusion in exclusions:
-        print('exclusion: ' + exclusion)
-        files_to_exclude = [file for file in files if exclusion in file]
+        files_to_exclude = [file for file in files if exclusion + "-" in file]
         for files_to_exclude in files_to_exclude:
             files.remove(files_to_exclude)
 
