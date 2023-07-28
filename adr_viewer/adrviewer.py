@@ -144,6 +144,12 @@ def get_adr_files(path):
     files.sort()
     return files
 
+def exclude_adr_files(files, exclusions):
+    for exclusion in exclusions:
+        print('exclusion: ' + exclusion)
+        files_to_exclude = [file for file in files if exclusion in file]
+        for files_to_exclude in files_to_exclude:
+            files.remove(files_to_exclude)
 
 def run_server(content, port):
     print(f'Starting server at http://localhost:{port}/')
@@ -153,9 +159,11 @@ def run_server(content, port):
 
 
 def generate_content(path, template_dir_override=None,
-                     heading=None, configuration=None):
+                     heading=None, exclusions=None, configuration=None):
 
     files = get_adr_files("%s/*.md" % path)
+
+    exclude_adr_files(files, exclusions)
 
     if not heading:
         heading = 'ADR Viewer - ' + os.path.basename(os.getcwd())
@@ -237,11 +245,17 @@ def generate_content(path, template_dir_override=None,
               default='ADR Viewer - ',
               help='ADR Page Heading',
               show_default=True)
+@click.option('--exclusions',
+              '-e',
+              multiple=True,
+              default=None,
+              help='ADR ids to exclude, for example --exclusions 0001 -e 0002 -e 0003',
+              show_default=True)
 @click.option('--config',
               default='config.toml',
               help='Configuration settings',
               show_default=True)
-def main(adr_path, output, serve, port, template_dir, heading, config):
+def main(adr_path, output, serve, port, template_dir, heading, exclusions, config):
     from os.path import exists
     # Ensure that there is a configuration file
     if exists(config):
@@ -249,8 +263,7 @@ def main(adr_path, output, serve, port, template_dir, heading, config):
     else:
         configuration_file = None
 
-    content = generate_content(adr_path, template_dir,
-                               heading, configuration_file)
+    content = generate_content(adr_path, template_dir, heading, exclusions, configuration_file)
 
     if serve:
         run_server(content, port)
