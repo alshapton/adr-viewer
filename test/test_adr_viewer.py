@@ -6,7 +6,7 @@ from ast import literal_eval
 import pytest
 sys.path.insert(1, '..' + os.sep + 'adr_viewer')
 
-from adrviewer import parse_adr_to_config, render_html  # noqa
+from adrviewer import parse_adr_to_config, render_html, exclude_adr_files  # noqa
 
 
 @pytest.fixture
@@ -120,6 +120,19 @@ def test_should_render_html_with_collapsible_index(html_defaults):
     result = '<a data-toggle="collapse" href="#collapse123">Record 123</a>'
     assert result in html
 
+def test_exclude_adr_files():
+    adr1 = "/some/path/0001-ADR1.md"
+    adr3 = "/some/path/0003-ADR3.md"
+    files = [
+        adr1,
+        "/some/path/0002-ADR2.md",
+        adr3,
+        "/some/path/0004-ADR4.md",
+    ]
+    exclude_adr_files(files, ["0001", "0003"])
+    assert len(files) == 2
+    assert adr1 not in files
+    assert adr3 not in files
 
 def test_should_ignore_invalid_files():
     config = parse_adr_to_config('../test/adr/0003-bad-formatting.md')
