@@ -1,8 +1,11 @@
 # Import system modules
+import os
+import sys
 import ast
 from ast import literal_eval
 
 import pytest
+sys.path.insert(1, '..' + os.sep + 'adr_viewer')
 
 from adr_viewer.adrviewer import parse_adr_to_config, render_html, exclude_adr_files, apply_configuration_overrides  # noqa
 
