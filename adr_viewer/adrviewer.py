@@ -48,6 +48,10 @@ def parse_adr_to_config(path):
 
     soup = BeautifulSoup(adr_as_html, features='html.parser')
 
+    header = soup.find('h1')
+    if not header:
+        return None
+
     status = list(extract_statuses_from_adr(soup))
     thedate = list(extract_from_adr(soup, 'h1', 'p', 'ul', 'li', ''))[0].replace('Date: ', '')
     context = list(extract_from_adr(soup, 'h2', 'p', 'ul', 'li', 'Context'))
@@ -102,27 +106,22 @@ def parse_adr_to_config(path):
     else:
         status = 'unknown'
 
-    header = soup.find('h1')
-
-    if header:
-        return {
-                'status': status,
-                'date': thedate,
-                'body': adr_as_html,
-                'title': header.text,
-                'context': context,
-                'decision': decision,
-                'consequences': consequences,
-                'references': references,
-                'superceded': superceded,
-                'supercedes': supercedes,
-                'amended': amended,
-                'amends': amends,
-                'drivenby': drivenby,
-                'drives': drives
-            }
-    else:
-        return None
+    return {
+        'status': status,
+        'date': thedate,
+        'body': adr_as_html,
+        'title': header.text,
+        'context': context,
+        'decision': decision,
+        'consequences': consequences,
+        'references': references,
+        'superceded': superceded,
+        'supercedes': supercedes,
+        'amended': amended,
+        'amends': amends,
+        'drivenby': drivenby,
+        'drives': drives
+    }
 
 
 def render_html(config, template_dir):
