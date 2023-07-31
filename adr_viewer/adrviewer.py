@@ -10,7 +10,7 @@ import mistune
 
 
 def extract_statuses_from_adr(page_object):
-    status_section = page_object.find('h2', text='Status')
+    status_section = page_object.find('h2', string='Status')
 
     if status_section and status_section.nextSibling:
         current_node = status_section.nextSibling
@@ -27,7 +27,7 @@ def extract_statuses_from_adr(page_object):
                 continue
 
 def extract_from_adr(page_object, find1, node1, node2, node3, txt):
-    section = page_object.find(find1, text=txt)
+    section = page_object.find(find1, string=txt)
 
     if section and section.nextSibling:
         current_node = section.nextSibling
@@ -47,6 +47,10 @@ def parse_adr_to_config(path):
     adr_as_html = mistune.markdown(open(path).read())
 
     soup = BeautifulSoup(adr_as_html, features='html.parser')
+
+    header = soup.find('h1')
+    if not header:
+        return None
 
     status = list(extract_statuses_from_adr(soup))
     thedate = list(extract_from_adr(soup, 'h1', 'p', 'ul', 'li', ''))[0].replace('Date: ', '')
@@ -102,27 +106,22 @@ def parse_adr_to_config(path):
     else:
         status = 'unknown'
 
-    header = soup.find('h1')
-
-    if header:
-        return {
-                'status': status,
-                'date': thedate,
-                'body': adr_as_html,
-                'title': header.text,
-                'context': context,
-                'decision': decision,
-                'consequences': consequences,
-                'references': references,
-                'superceded': superceded,
-                'supercedes': supercedes,
-                'amended': amended,
-                'amends': amends,
-                'drivenby': drivenby,
-                'drives': drives
-            }
-    else:
-        return None
+    return {
+        'status': status,
+        'date': thedate,
+        'body': adr_as_html,
+        'title': header.text,
+        'context': context,
+        'decision': decision,
+        'consequences': consequences,
+        'references': references,
+        'superceded': superceded,
+        'supercedes': supercedes,
+        'amended': amended,
+        'amends': amends,
+        'drivenby': drivenby,
+        'drives': drives
+    }
 
 
 def render_html(config, template_dir):
