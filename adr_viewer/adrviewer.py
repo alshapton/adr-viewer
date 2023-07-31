@@ -10,7 +10,7 @@ import mistune
 
 
 def extract_statuses_from_adr(page_object):
-    status_section = page_object.find('h2', text='Status')
+    status_section = page_object.find('h2', string='Status')
 
     if status_section and status_section.nextSibling:
         current_node = status_section.nextSibling
@@ -27,7 +27,7 @@ def extract_statuses_from_adr(page_object):
                 continue
 
 def extract_from_adr(page_object, find1, node1, node2, node3, txt):
-    section = page_object.find(find1, text=txt)
+    section = page_object.find(find1, string=txt)
 
     if section and section.nextSibling:
         current_node = section.nextSibling
