@@ -3,6 +3,16 @@
 
 title = "TOML Configuration for adr-viewer look and feel"
 
+[application]
+# Application configuration
+adr_path = 'doc/adr'
+output = "index.html"
+serve = false
+port = 8000
+template_dir = 'templates/vanilla'
+heading = "Architechture Decision Records"
+exclusions = []
+
 [page]
 # Properties for the page
 background-color            = "white"

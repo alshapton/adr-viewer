@@ -1,12 +1,10 @@
-import os
 import glob
 import toml
-import ast
 
 from bottle import Bottle, run
 from bs4 import BeautifulSoup
 import click
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, select_autoescape
 from jinja2.loaders import FileSystemLoader
 import mistune
 
@@ -127,10 +125,10 @@ def parse_adr_to_config(path):
         return None
 
 
-def render_html(config, template_dir_override=None):
+def render_html(config, template_dir):
 
     env = Environment(
-        loader=PackageLoader('adr_viewer', 'templates/vanilla') if template_dir_override is None else FileSystemLoader(template_dir_override),  # noqa
+        loader=FileSystemLoader(template_dir),
         autoescape=select_autoescape(['html', 'xml'])
     )
 
@@ -156,47 +154,21 @@ def run_server(content, port):
     app.route('/', 'GET', lambda: content)
     run(app, host='localhost', port=port, quiet=True)
 
+def generate_content(configuration_file):
 
-def generate_content(path, template_dir_override=None,
-                     heading=None, exclusions=None, configuration=None):
+    files = get_adr_files("%s/*.md" % configuration_file["application"]["adr_path"])
 
-    files = get_adr_files("%s/*.md" % path)
-
-    exclude_adr_files(files, exclusions)
-
-    if not heading:
-        heading = 'ADR Viewer - ' + os.path.basename(os.getcwd())
+    exclude_adr_files(files, configuration_file["application"]["exclusions"])
 
     config = {
-        'heading': heading,
+        'heading': configuration_file["application"]["heading"],
         'records': [],
         'page': []
     }
 
-    # Set defaults for colours (or use passed in configuration)
-    conf = {}
-    if type(configuration) == type(None):
-        conf = ast.literal_eval('{ \
-        "accepted": { \
-            "icon": "fa-check", \
-            "background-color": "lightgreen"}, \
-        "amended": {\
-            "icon": "fa-arrow-down", \
-            "background-color": "yellow"}, \
-        "pending": { \
-            "icon": "fa-hourglass-half", \
-            "background-color": "lightblue"}, \
-        "superseded": { \
-            "icon" : "fa-times",\
-            "background-color": "lightgrey", \
-            "text-decoration": "line-through"}, \
-        "unknown": { \
-            "icon" : "fa-question", \
-            "background-color": "white"}}')
-        config['page'] = ast.literal_eval('{"background-color": "white"}')
-    else:
-        conf = configuration['status']
-        config['page'] = configuration['page']
+    # Set colours
+    conf = configuration_file['status']
+    config['page'] = configuration_file['page']
 
     # Retrieve properties from configuration
     for status in conf:
@@ -216,56 +188,62 @@ def generate_content(path, template_dir_override=None,
         else:
             print("Could not parse %s in ADR format, ignoring." % adr_file)
 
-    return render_html(config, template_dir_override)
+    return render_html(config, configuration_file["application"]["template_dir"])
 
+def apply_configuration_overrides(configuration, adr_path_override=None, output_override=None, serve_override=None,
+                                  port_override=None, template_dir_override=None, heading_override=None,
+                                  exclusions_override=None):
+
+    if adr_path_override:
+        configuration["application"]["adr_path"] = adr_path_override
+
+    if output_override:
+        configuration["application"]["output"] = output_override
+
+    if serve_override:
+        configuration["application"]["serve"] = serve_override
+
+    if port_override:
+        configuration["application"]["port"] = port_override
+
+    if template_dir_override:
+        configuration["application"]["template_dir"] = template_dir_override
+
+    if heading_override:
+        configuration["application"]["heading"] = heading_override
+
+    if exclusions_override:
+        configuration["application"]["exclusions"] = exclusions_override
+
+    return configuration
 
 @click.command()
-@click.option('--adr-path',
-              default='doc/adr/',
-              help='Directory containing ADR files.',
-              show_default=True)
-@click.option('--output',
-              default='index.html',
-              help='File to write output to.',
-              show_default=True)
-@click.option('--serve',
-              default=False,
-              help='Serve content at http://localhost:8000/',
-              is_flag=True)
-@click.option('--port',
-              default=8000,
-              help='Change port for the server',
-              show_default=True)
-@click.option('--template-dir',
-              default=None,
-              help='Template directory.',
-              show_default=True)
-@click.option('--heading',
-              default='ADR Viewer - ',
-              help='ADR Page Heading',
-              show_default=True)
+@click.option('--adr-path', help='Directory containing ADR files.')
+@click.option('--output', help='File to write output to.')
+@click.option('--serve', help='Serve content at "http://localhost:<port>/".')
+@click.option('--port', help='Change port for the server.')
+@click.option('--template-dir', help='Template directory.')
+@click.option('--heading', help='ADR Page Heading.')
 @click.option('--exclusions',
               '-e',
               multiple=True,
-              default=None,
-              help='ADR ids to exclude, for example --exclusions 0001 -e 0002 -e 0003',
-              show_default=True)
-@click.option('--config',
-              default='config.toml',
-              help='Configuration settings',
-              show_default=True)
+              help='ADR ids to exclude, for example "--exclusions 0001 -e 0002 -e 0003".')
+@click.option('--config', help='Configuration settings.')
 def main(adr_path, output, serve, port, template_dir, heading, exclusions, config):
     from os.path import exists
-    # Ensure that there is a configuration file
-    if exists(config):
+
+    # Load configuration file
+    if type(config) != type(None) and exists(config):
         configuration_file = toml.load(config)
     else:
-        configuration_file = None
+        configuration_file = toml.load("config.toml")
 
-    content = generate_content(adr_path, template_dir, heading, exclusions, configuration_file)
+    apply_configuration_overrides(configuration_file, adr_path, output, serve, port, template_dir, heading, exclusions)
 
-    if serve:
-        run_server(content, port)
+    content = generate_content(configuration_file)
+
+    if configuration_file["application"]["serve"]:
+        run_server(content, configuration_file["application"]["port"])
     else:
-        with open(output, 'w') as out:
+        with open(configuration_file["application"]["output"], 'w') as out:
             out.write(content)
