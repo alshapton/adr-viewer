@@ -21,12 +21,10 @@ EXCLUSIONS = []
 
 @pytest.fixture
 def adr0001():
-    # return '../doc/adr/0001-record-architecture-decisions.md'
     return from_root('doc', 'adr', '0001-record-architecture-decisions.md')
 
 @pytest.fixture
 def template_dir():
-    # return '../adr_viewer/templates/vanilla'
     return from_root('adr_viewer', 'templates', 'vanilla')
 
 @pytest.fixture
@@ -77,30 +75,24 @@ def test_should_include_adr_as_html(adr0001):
 
 
 def test_should_mark_superseded_records():
-    # config = parse_adr_to_config(
-    #     '../doc/adr/0003-use-same-colour-for-all-headers.md')
     config = parse_adr_to_config(from_root('doc', 'adr', '0003-use-same-colour-for-all-headers.md'))
 
     assert config['status'] == 'superseded'
 
 
 def test_should_mark_amended_records():
-    # adr0004 = '../doc/adr/0004-distinguish-superseded-records-with-colour.md'
-    # adr0004 = parse_adr_to_config(from_root('doc', 'adr', '0004-distinguish-superseded-records-with-colour.md'))
     config = parse_adr_to_config(from_root('doc', 'adr', '0004-distinguish-superseded-records-with-colour.md'))
 
     assert config['status'] == 'amended'
 
 
 def test_should_mark_unknown_records():
-    # config = parse_adr_to_config('../test/adr/0001-unknown-status.md')
     config = parse_adr_to_config(from_root('test', 'adr', '0001-unknown-status.md'))
 
     assert config['status'] == 'unknown'
 
 
 def test_should_mark_pending_records():
-    # config = parse_adr_to_config('../test/adr/0002-pending-status.md')
     config = parse_adr_to_config(from_root('test', 'adr', '0002-pending-status.md'))
 
     assert config['status'] == 'pending'
@@ -199,7 +191,6 @@ def test_exclude_adr_files():
     assert adr3 not in files
 
 def test_should_ignore_invalid_files():
-    # config = parse_adr_to_config('../test/adr/0003-bad-formatting.md')
     config = parse_adr_to_config(from_root('test', 'adr', '0003-bad-formatting.md'))
 
     assert config is None
