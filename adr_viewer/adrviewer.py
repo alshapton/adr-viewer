@@ -95,11 +95,11 @@ def parse_adr_to_config(path):
                 ln = driveslink.replace("Drives ", "")
                 drives.append(ln)
 
-    if any([line.startswith("Amended by") for line in status]):
+    if any([line.startswith("Amended") for line in status]):
         status = 'amended'
     elif any([line.startswith("Accepted") for line in status]):
         status = 'accepted'
-    elif any([line.startswith("Superseded by") for line in status]):
+    elif any([line.startswith("Superceded") or line.startswith("Superseded") for line in status]):
         status = 'superseded'
     elif any([line.startswith("Proposed") or line.startswith("Pending") for line in status]):
         status = 'pending'
